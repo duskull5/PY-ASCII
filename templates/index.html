@@ -4,23 +4,42 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASCII Art Generator by Atlas</title>
+    <title>ASCII Art Generator By Atlas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             background-color: #343a40;
             color: #fff;
         }
-        .result-box, .suggestion-box {
+        .suggestion-box {
             border: 1px solid #888;
             padding: 15px;
             border-radius: 5px;
             background-color: #444;
             margin-bottom: 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            resize: both;
+            overflow: auto;
         }
-        .suggestion-box {
-            min-height: 100px;
+        .copy-btn {
+            margin-top: 5px;
         }
+        .result-box {
+    border: 1px solid #888;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #444;
+    margin-bottom: 15px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+.suggestion-box, .result-box {
+    width: max-content;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
     </style>
 </head>
 <body>
@@ -42,25 +61,44 @@
             <button type="submit" class="btn btn-primary">Generate ASCII Art</button>
         </form>
         <h2 class="mt-4">Result:</h2>
+        <pre class="suggestion-box main-result"></pre>
+        <button class="btn btn-secondary copy-btn" onclick="copyToClipboard(document.querySelector('.main-result'))">Copy to Clipboard</button>
         {% if result %}
-            <pre id="result" class="result-box">{{ result }}</pre>
-        {% else %}
-            <pre id="result" class="result-box"></pre>
+            <script>
+                document.querySelector('.main-result').innerText = `{{ result }}`;
+            </script>
         {% endif %}
-        <h2 class="mt-4">Suggestions:</h2>
         <div id="font-suggestions" class="row mt-5"></div>
     </div>
     <script>
+    function adjustBoxHeight(selector) {
+        const boxes = document.querySelectorAll(selector);
+        boxes.forEach(box => {
+            box.style.height = 'auto';
+            box.style.height = `${box.scrollHeight}px`;
+        });
+    }
+
+        function copyToClipboard(text) {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+        }
+
         async function generateFontSuggestions() {
-            const resultContainer = document.getElementById('result');
+            const resultContainer = document.querySelector('.main-result');
             const suggestionsContainer = document.getElementById('font-suggestions');
             const text = document.getElementById('text').value;
             const font = document.getElementById('font').value;
 
             suggestionsContainer.innerHTML = '';
 
-            // Generate the main result
-            const responseMain = await fetch('/generate_ascii', {
+
+            // Fetch the main result
+            const mainResultResponse = await fetch('/generate_ascii', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
@@ -68,46 +106,59 @@
                 body: `text=${encodeURIComponent(text)}&font=${encodeURIComponent(font)}`
             });
 
-            if (responseMain.ok) {
-                const resultMain = await responseMain.text();
-                resultContainer.innerText = resultMain;
+            if (mainResultResponse.ok) {
+                const mainResult = await mainResultResponse.text();
+                if (resultContainer) {
+                    resultContainer.style.display = 'block';
+                    resultContainer.innerText = mainResult;
+                    adjustBoxHeight('.main-result');
+                }
             } else {
-                console.error('Failed to fetch the main result');
+                console.error('Failed to fetch main result');
             }
 
-            // Generate font suggestions
-            const responseSuggestions = await fetch('/font_suggestions', {
+            // Fetch font suggestions
+            const response = await fetch('/font_suggestions', {
                 method: 'POST',
                 headers: {
-                  'Content-Type': 'application/x-www-form-urlencoded'
-              },
-              body: `text=${encodeURIComponent(text)}`
-          });
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `text=${encodeURIComponent(text)}`
+            });
 
-          if (responseSuggestions.ok) {
-              const suggestions = await responseSuggestions.json();
+            if (response.ok) {
+                const suggestions = await response.json();
 
-              for (const suggestion of suggestions) {
-                  const col = document.createElement('div');
-                  col.className = 'col-md-4';
+                for (const suggestion of suggestions) {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-4';
 
-                  const suggestionTitle = document.createElement('h3');
-                  suggestionTitle.innerText = `Suggested font: ${suggestion.font}`;
+                    const suggestionTitle = document.createElement('h3');
+                    suggestionTitle.innerText = `Suggested font: ${suggestion.font}`;
 
-                  const suggestionPre = document.createElement('pre');
-                  suggestionPre.className = 'suggestion-box';
-                  suggestionPre.innerText = suggestion.result;
+                    const suggestionPre = document.createElement('pre');
+                    suggestionPre.className = 'suggestion-box result-box';
+                    suggestionPre.innerText = suggestion.result;
 
-                  col.appendChild(suggestionTitle);
-                  col.appendChild(suggestionPre);
-                  suggestionsContainer.appendChild(col);
-              }
-          } else {
-              console.error('Failed to fetch font suggestions');
-          }
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'btn btn-secondary copy-btn';
+                    copyButton.innerText = 'Copy to Clipboard';
+                    copyButton.onclick = () => {
+                        copyToClipboard(suggestionPre.innerText);
+                    };
 
-          return true;
-      }
-  </script>
-  </body>
-  </html>
+                    col.appendChild(suggestionTitle);
+                    col.appendChild(suggestionPre);
+                    col.appendChild(copyButton);
+                    suggestionsContainer.appendChild(col);
+                }
+                adjustBoxHeight('.result-box');
+            } else {
+                console.error('Failed to fetch font suggestions');
+            }
+
+            return true;
+        }
+    </script>
+</body>
+</html>
