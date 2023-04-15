@@ -4,18 +4,28 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASCII Art Generator</title>
+    <title>ASCII Art Generator by Atlas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             background-color: #343a40;
             color: #fff;
         }
+        .result-box, .suggestion-box {
+            border: 1px solid #888;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #444;
+            margin-bottom: 15px;
+        }
+        .suggestion-box {
+            min-height: 100px;
+        }
     </style>
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="mb-4">ASCII Art Generator</h1>
+        <h1 class="mb-4">ASCII Art Generator By Atlas</h1>
         <form method="POST" onsubmit="event.preventDefault(); generateFontSuggestions();">
             <div class="mb-3">
                 <label for="text" class="form-label">Enter text:</label>
@@ -31,12 +41,14 @@
             </div>
             <button type="submit" class="btn btn-primary">Generate ASCII Art</button>
         </form>
+        <h2 class="mt-4">Result:</h2>
         {% if result %}
-            <pre id="result" class="mt-4">{{ result }}</pre>
+            <pre id="result" class="result-box">{{ result }}</pre>
         {% else %}
-            <pre id="result" class="mt-4"></pre>
+            <pre id="result" class="result-box"></pre>
         {% endif %}
-        <div id="font-suggestions" class="mt-5"></div>
+        <h2 class="mt-4">Suggestions:</h2>
+        <div id="font-suggestions" class="row mt-5"></div>
     </div>
     <script>
         async function generateFontSuggestions() {
@@ -67,30 +79,35 @@
             const responseSuggestions = await fetch('/font_suggestions', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: `text=${encodeURIComponent(text)}`
-            });
+                  'Content-Type': 'application/x-www-form-urlencoded'
+              },
+              body: `text=${encodeURIComponent(text)}`
+          });
 
-            if (responseSuggestions.ok) {
-                const suggestions = await responseSuggestions.json();
+          if (responseSuggestions.ok) {
+              const suggestions = await responseSuggestions.json();
 
-                for (const suggestion of suggestions) {
-                    const suggestionTitle = document.createElement('h3');
-                    suggestionTitle.innerText = `Suggested font: ${suggestion.font}`;
+              for (const suggestion of suggestions) {
+                  const col = document.createElement('div');
+                  col.className = 'col-md-4';
 
-                    const suggestionPre = document.createElement('pre');
-                    suggestionPre.innerText = suggestion.result;
+                  const suggestionTitle = document.createElement('h3');
+                  suggestionTitle.innerText = `Suggested font: ${suggestion.font}`;
 
-                    suggestionsContainer.appendChild(suggestionTitle);
-                    suggestionsContainer.appendChild(suggestionPre);
-                }
-            } else {
-                console.error('Failed to fetch font suggestions');
-            }
+                  const suggestionPre = document.createElement('pre');
+                  suggestionPre.className = 'suggestion-box';
+                  suggestionPre.innerText = suggestion.result;
 
-            return true;
-        }
-    </script>
-</body>
-</html>
+                  col.appendChild(suggestionTitle);
+                  col.appendChild(suggestionPre);
+                  suggestionsContainer.appendChild(col);
+              }
+          } else {
+              console.error('Failed to fetch font suggestions');
+          }
+
+          return true;
+      }
+  </script>
+  </body>
+  </html>
