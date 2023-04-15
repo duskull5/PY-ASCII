@@ -62,7 +62,7 @@
         </form>
         <h2 class="mt-4">Result:</h2>
         <pre class="suggestion-box main-result"></pre>
-        <button class="btn btn-secondary copy-btn" onclick="copyToClipboard(document.querySelector('.main-result'))">Copy to Clipboard</button>
+        <button class="btn btn-secondary copy-btn" onclick="copyToClipboard(document.querySelector('.main-result').innerText)">Copy to Clipboard</button>
         {% if result %}
             <script>
                 document.querySelector('.main-result').innerText = `{{ result }}`;
