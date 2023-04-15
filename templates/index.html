@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII Art Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #343a40;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Atlas ASCII Art Generator</h1>
+        <form method="POST">
+            <div class="mb-3">
+                <label for="text" class="form-label">Enter text:</label>
+                <input type="text" class="form-control" id="text" name="text" required>
+            </div>
+            <div class="mb-3">
+                <label for="font" class="form-label">Choose font:</label>
+                <select class="form-select" id="font" name="font">
+                    {% for font in fonts %}
+                        <option value="{{ font }}" {% if font == selected_font %}selected{% endif %}>{{ font }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Generate ASCII Art</button>
+        </form>
+        {% if result %}
+            <pre class="mt-4">{{ result }}</pre>
+        {% endif %}
+    </div>
+</body>
+</html>
