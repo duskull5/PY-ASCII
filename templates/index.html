@@ -15,8 +15,8 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="mb-4">Atlas ASCII Art Generator</h1>
-        <form method="POST">
+        <h1 class="mb-4">ASCII Art Generator</h1>
+        <form method="POST" onsubmit="event.preventDefault(); generateFontSuggestions();">
             <div class="mb-3">
                 <label for="text" class="form-label">Enter text:</label>
                 <input type="text" class="form-control" id="text" name="text" required>
@@ -32,8 +32,65 @@
             <button type="submit" class="btn btn-primary">Generate ASCII Art</button>
         </form>
         {% if result %}
-            <pre class="mt-4">{{ result }}</pre>
+            <pre id="result" class="mt-4">{{ result }}</pre>
+        {% else %}
+            <pre id="result" class="mt-4"></pre>
         {% endif %}
+        <div id="font-suggestions" class="mt-5"></div>
     </div>
+    <script>
+        async function generateFontSuggestions() {
+            const resultContainer = document.getElementById('result');
+            const suggestionsContainer = document.getElementById('font-suggestions');
+            const text = document.getElementById('text').value;
+            const font = document.getElementById('font').value;
+
+            suggestionsContainer.innerHTML = '';
+
+            // Generate the main result
+            const responseMain = await fetch('/generate_ascii', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `text=${encodeURIComponent(text)}&font=${encodeURIComponent(font)}`
+            });
+
+            if (responseMain.ok) {
+                const resultMain = await responseMain.text();
+                resultContainer.innerText = resultMain;
+            } else {
+                console.error('Failed to fetch the main result');
+            }
+
+            // Generate font suggestions
+            const responseSuggestions = await fetch('/font_suggestions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `text=${encodeURIComponent(text)}`
+            });
+
+            if (responseSuggestions.ok) {
+                const suggestions = await responseSuggestions.json();
+
+                for (const suggestion of suggestions) {
+                    const suggestionTitle = document.createElement('h3');
+                    suggestionTitle.innerText = `Suggested font: ${suggestion.font}`;
+
+                    const suggestionPre = document.createElement('pre');
+                    suggestionPre.innerText = suggestion.result;
+
+                    suggestionsContainer.appendChild(suggestionTitle);
+                    suggestionsContainer.appendChild(suggestionPre);
+                }
+            } else {
+                console.error('Failed to fetch font suggestions');
+            }
+
+            return true;
+        }
+    </script>
 </body>
 </html>
